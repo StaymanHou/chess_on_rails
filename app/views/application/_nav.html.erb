@@ -1,0 +1,46 @@
+<nav class="navbar navbar-inverse" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <%= link_to 'Stayman Chess', root_path, class: 'navbar-brand' %>
+    </div>
+    <div id="navbar" class="collapse navbar-collapse">
+      <ul class="nav navbar-nav">
+        <li<%= raw ' class="active"' if params[:controller].start_with? 'welcome' %>><%= link_to 'Home', root_path %></li>
+        <% if user_signed_in? %>
+          <li<%= raw ' class="active"' if params[:controller].start_with? 'games' %>><%= link_to 'Games', games_path %></li>
+        <% end %>
+      </ul>
+      <% if user_signed_in? %>
+        <ul class="nav navbar-nav navbar-right">
+          <li><%= link_to current_user.email, '#' %></li>
+        </ul>
+      <% else %>
+        <%= form_for(:user, as: User, url: user_session_path, html: { class: 'navbar-form navbar-right', role: 'form' }) do |f| %>
+          <div class="form-group">
+            <%= f.email_field :email, autofocus: true, class: 'form-control', placeholder: 'Email' %>
+          </div>
+
+          <div class="form-group">
+            <%= f.password_field :password, autocomplete: "off", class: 'form-control', placeholder: 'Password' %>
+          </div>
+
+          <% if Devise.mappings[:user].rememberable? -%>
+            <div class="form-group">
+              <%= f.check_box :remember_me %>
+              <%= f.label :remember_me, style: 'color:#ffffff;' %>
+            </div>
+          <% end -%>
+
+          <%= f.submit "Log in", class: 'btn btn-success' %>
+          <%= link_to 'Sign Up', new_user_registration_path, class: 'btn btn-success form-control' %>
+        <% end %>
+      <% end %>
+    </div><!--/.nav-collapse -->
+  </div>
+</nav>

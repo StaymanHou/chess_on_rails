@@ -12,7 +12,7 @@ default: &default
 
 development:
   <<: *default
-  database: chess
+  database: chess_dev
   username: root
   password:
   host: 127.0.0.1

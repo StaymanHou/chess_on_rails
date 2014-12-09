@@ -1,14 +1,27 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Src</title>
+  <title>Stayman Chess</title>
   <%= stylesheet_link_tag    'application', media: 'all', 'data-turbolinks-track' => true %>
   <%= javascript_include_tag 'application', 'data-turbolinks-track' => true %>
   <%= csrf_meta_tags %>
 </head>
 <body>
 
+<%= render 'nav' %>
+
+<div class="container">
+
+<% if notice %>
+<div class="alert alert-warning" role="alert"><%= notice %></div>
+<% end %>
+<% if alert %>
+<div class="alert alert-danger" role="alert"><%= alert %></div>
+<% end %>
+
 <%= yield %>
+
+</div>
 
 </body>
 </html>
