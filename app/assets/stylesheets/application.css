@@ -14,3 +14,9 @@
  *= require_self
  *= require bootstrap
  */
+
+#flash_message_box {
+  position: fixed;
+  top: 240px;
+  left: 160px;
+}

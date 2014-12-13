@@ -1,5 +1,6 @@
 class GamesController < ApplicationController
-  before_action :set_game, only: [:show, :edit, :update, :destroy]
+  before_action :set_game, only: [:show, :edit, :update, :destroy, :move]
+  before_action :set_move, only: [:move]
 
   # GET /games
   # GET /games.json
@@ -10,14 +11,16 @@ class GamesController < ApplicationController
   # GET /games/1
   # GET /games/1.json
   def show
-    flag_invalid = false
+    chess_game = PGN::Game.new(@game.moves)
+    @error = nil
     begin
-      chess_game = Chess::Game.new(@game.moves)
-    rescue Exception => e
-      flash[:alert] = e.message
-      flag_invalid = true
+      @fen = chess_game.positions.last.to_fen
+      @fen = PGN::FEN.start if @game.moves.empty?
+    rescue
+      @fen = ''
+      flash[:alert] = 'Invalid moves.'
+      @error = 'Invalid moves.'
     end
-    @board = flag_invalid ? '' : chess_game.to_s.gsub(/\e\[(\d+)m/, '')
   end
 
   # GET /games/new
@@ -69,10 +72,30 @@ class GamesController < ApplicationController
     end
   end
 
+  # GET /games/1/move/e4.json
+  def move
+    @game.moves << @move
+    chess_game = PGN::Game.new(@game.moves)
+    @error = nil
+    begin
+      @fen = chess_game.positions.last.to_fen
+    rescue
+      @fen = ''
+      flash[:alert] = 'Invalid move.'
+      @error = 'Invalid move.'
+    else
+      @game.save
+    end
+  end
+
   private
     # Use callbacks to share common setup or constraints between actions.
     def set_game
       @game = Game.find(params[:id])
+    end
+
+    def set_move
+      @move = params[:move]
     end
 
     # Never trust parameters from the scary internet, only allow the white list through.

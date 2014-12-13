@@ -1,13 +1,8 @@
 <p id="notice"><%= notice %></p>
 
-<p>
-  <strong>Moves:</strong>
-  <%= @game.moves %>
-</p>
+<div id="board" style="width: 400px"></div>
+<script>
+  var game_id = '<%= @game.id %>';
+</script>
 
-<p>
-  <pre class="board"><%= @board %></pre>
-</p>
-
-<%= link_to 'Edit', edit_game_path(@game) %> |
 <%= link_to 'Back', games_path %>
