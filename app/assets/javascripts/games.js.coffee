@@ -10,6 +10,13 @@ $( document ).ready () ->
   window.game = null
   window.loading = false
 
+  check_game_over = () ->
+    if window.game.moves().length <= 0
+      winner = 'black'
+      if window.game.turn() is 'b'
+        winner = 'white'
+      document.flash_message('winner: '+winner)
+
   loading_start = () ->
     window.loading = true
     loading_box = $('#loading_box')
@@ -26,6 +33,17 @@ $( document ).ready () ->
     window.loading = false
     loading_box = $('#loading_box')
     loading_box.hide()
+
+  makeRandomMove = () ->
+    possibleMoves = window.game.moves()
+    return if possibleMoves.length is 0
+    randomIndex = Math.floor(Math.random() * possibleMoves.length)
+    game.move(possibleMoves[randomIndex])
+    board.position(game.fen())
+    history = window.game.history()
+    $.getJSON( "/games/"+game_id+"/move/"+history[history.length-1]+".json", (data) ->
+      return
+    )
 
   removeGreySquares = () ->
     $('#board .square-55d63').css('background', '')
@@ -75,6 +93,8 @@ $( document ).ready () ->
     $.getJSON( "/games/"+game_id+"/move/"+history[history.length-1]+".json", (data) ->
       document.flash_message(data.error+" Try reload") if data.error
       window.board.position(window.game.fen())
+      check_game_over()
+      makeRandomMove()
       loading_finish()
     )
 
@@ -94,4 +114,5 @@ $( document ).ready () ->
       console.log(data.fen)
       window.game = new Chess(data.fen)
       window.board = new ChessBoard('board', cfg)
+      check_game_over()
     )
