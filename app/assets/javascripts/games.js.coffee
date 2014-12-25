@@ -34,16 +34,96 @@ $( document ).ready () ->
     loading_box = $('#loading_box')
     loading_box.hide()
 
+  get_score = (fen) ->
+    zi = fen.split(" ")[0]
+    turn = fen.split(" ")[1]
+    score = 0
+    for z in zi
+      switch z
+        when 'r' then score += 10
+        when 'n' then score += 7
+        when 'b' then score += 7
+        when 'q' then score += 20
+        when 'k' then score += 200
+        when 'p' then score += 2
+        when 'R' then score -= 10
+        when 'N' then score -= 7
+        when 'B' then score -= 7
+        when 'Q' then score -= 20
+        when 'K' then score -= 200
+        when 'P' then score -= 2
+    return -score if turn is 'b'
+    return score
+
+  get_move_score = (fen, move) ->
+    local_game = new Chess(fen)
+    local_game.move(move)
+    score = get_score(local_game.fen())
+    return score
+
+  get_best_score = (fen, steps) ->
+    turn = fen.split(" ")[1]
+    dec = turn is 'b' ? -1 : 1
+    return dec * get_score(fen) if steps is 0
+    local_game = new Chess(fen)
+    possibleMoves = local_game.moves()
+    return dec * Infinity if possibleMoves.length is 0
+    best_score = -Infinity
+    for move in possibleMoves
+      next_game = new Chess(fen)
+      next_game.move(move)
+      score = get_best_score(next_game.fen(), steps-1)
+      best_score = score if score > best_score
+    return dec * best_score
+
+  get_best_move = (fen, steps) ->
+    local_game = new Chess(fen)
+    possibleMoves = local_game.moves()
+    return if possibleMoves.length is 0
+    best_moves = []
+    best_score = -Infinity
+    for move in possibleMoves
+      next_game = new Chess(fen)
+      next_game.move(move)
+      score = get_best_score(next_game.fen(), steps-1)
+      if score > best_score
+        best_moves = [move]
+        best_score = score
+      else if score is best_score
+        best_moves.push(move)
+    randomIndex = Math.floor(Math.random() * best_moves.length)
+    return best_moves[randomIndex]
+
   makeRandomMove = () ->
     possibleMoves = window.game.moves()
     return if possibleMoves.length is 0
     randomIndex = Math.floor(Math.random() * possibleMoves.length)
     game.move(possibleMoves[randomIndex])
     board.position(game.fen())
-    history = window.game.history()
-    $.getJSON( "/games/"+game_id+"/move/"+history[history.length-1]+".json", (data) ->
-      return
-    )
+
+  makeGoodMove = () ->
+    possibleMoves = window.game.moves()
+    return if possibleMoves.length is 0
+    best_moves = []
+    best_score = -Infinity
+    for move in possibleMoves
+      score = get_move_score(window.game.fen(), move)
+      if score > best_score
+        best_moves = [move]
+        best_score = score
+      else if score is best_score
+        best_moves.push(move)
+    randomIndex = Math.floor(Math.random() * best_moves.length)
+    window.game.move(best_moves[randomIndex])
+    window.board.position(window.game.fen())
+
+  makeBetterMove = (steps) ->
+    () ->
+      move = get_best_move(window.game.fen(), steps)
+      window.game.move(move)
+      window.board.position(window.game.fen())
+
+  makeMove = makeGoodMove
 
   removeGreySquares = () ->
     $('#board .square-55d63').css('background', '')
@@ -84,17 +164,17 @@ $( document ).ready () ->
     removeGreySquares()
 
   onSnapEnd = (source, target, piece) ->
-    # console.log("----------SnapEnd----------")
-    # console.log("Source: " + source)
-    # console.log("Target: " + target)
-    # console.log("Piece: " + piece)
     loading_start()
     history = window.game.history()
     $.getJSON( "/games/"+game_id+"/move/"+history[history.length-1]+".json", (data) ->
       document.flash_message(data.error+" Try reload") if data.error
       window.board.position(window.game.fen())
       check_game_over()
-      makeRandomMove()
+      makeMove()
+      history = window.game.history()
+      $.getJSON( "/games/"+game_id+"/move/"+history[history.length-1]+".json", (data) ->
+        return
+      )
       loading_finish()
     )
 
@@ -111,7 +191,6 @@ $( document ).ready () ->
     $.getJSON( "/games/"+game_id+".json", (data) ->
       document.flash_message(data.error) if data.error
       cfg.position = data.fen
-      console.log(data.fen)
       window.game = new Chess(data.fen)
       window.board = new ChessBoard('board', cfg)
       check_game_over()
